@@ -1,0 +1,32 @@
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model files and large cached data
+*.pt
+*.pth
+*.safetensors
+*.bin
+models/
+model_cache/
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Results (optional - remove this line if you want to track results.json)
+# results.json
