@@ -39,13 +39,16 @@
       <div class="row g-4">
         <!-- LEFT: Upload Area -->
         <div class="col-lg-5">
-          <div class="card shadow-sm h-100 d-flex flex-column">
+          <div
+            class="card shadow-sm h-100 d-flex flex-column"
+            style="max-height: 70vh"
+          >
             <div class="card-header bg-primary text-white">
               <h6 class="mb-0">
                 <i class="bi bi-cloud-upload"></i> Upload Images
               </h6>
             </div>
-            <div class="card-body d-flex flex-column">
+            <div class="card-body d-flex flex-column" style="overflow-y: auto">
               <!-- Drop Zone -->
               <div
                 id="dropZone"
@@ -65,6 +68,7 @@
                 type="file"
                 id="fileInput"
                 multiple
+                webkitdirectory
                 accept="image/*"
                 style="display: none"
               />

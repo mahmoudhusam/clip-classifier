@@ -280,6 +280,10 @@ function initializeSliders() {
   confidenceSlider.addEventListener('input', (e) => {
     state.confidenceThreshold = parseInt(e.target.value);
     confidenceValue.textContent = state.confidenceThreshold + '%';
+    // Re-display results if they exist
+    if (state.results && !(state.results instanceof Blob)) {
+      displayResults();
+    }
   });
 
   exportFormat.addEventListener('change', (e) => {
@@ -446,18 +450,34 @@ function displayResults() {
     return;
   }
 
+  // Filter results by confidence threshold
+  const filteredResults = state.results.filter(
+    (r) => r.top_score >= state.confidenceThreshold,
+  );
+
   // For JSON, display detailed results
-  const groupedResults = groupByLabel(state.results);
+  const groupedResults = groupByLabel(filteredResults);
 
   // Summary
+  const totalProcessed = state.results.length;
+  const totalShown = filteredResults.length;
+  const avgConfidence =
+    filteredResults.length > 0
+      ? (
+          filteredResults.reduce((sum, r) => sum + r.top_score, 0) /
+          filteredResults.length
+        ).toFixed(1)
+      : 0;
+
   resultsSummary.innerHTML = `
         <h5 class="mb-3">Summary</h5>
         <div class="row">
             <div class="col-md-4">
                 <div class="card text-white bg-info">
                     <div class="card-body">
-                        <h6>Total Images</h6>
-                        <h3>${state.results.length}</h3>
+                        <h6>Images Shown</h6>
+                        <h3>${totalShown}/${totalProcessed}</h3>
+                        <small>${state.confidenceThreshold > 0 ? `(filtered ≥${state.confidenceThreshold}%)` : '(all)'}</small>
                     </div>
                 </div>
             </div>
@@ -473,7 +493,7 @@ function displayResults() {
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <h6>Avg Confidence</h6>
-                        <h3>${(state.results.reduce((sum, r) => sum + r.top_score, 0) / state.results.length).toFixed(1)}%</h3>
+                        <h3>${avgConfidence}%</h3>
                     </div>
                 </div>
             </div>
@@ -483,35 +503,44 @@ function displayResults() {
   // Details by category
   let detailsHTML = '<h5 class="mt-4 mb-3">Results by Category</h5>';
 
-  Object.entries(groupedResults).forEach(([label, files]) => {
-    detailsHTML += `
-            <div class="result-category">
-                <div class="result-category-header">
-                    <i class="bi bi-folder"></i> ${label.toUpperCase()} (${files.length})
-                </div>
-        `;
-
-    files.forEach((file) => {
-      const result = state.results.find((r) => r.filename === file);
-      const scoreClass =
-        result.top_score >= 80
-          ? 'score-high'
-          : result.top_score >= 50
-            ? 'score-medium'
-            : 'score-low';
-
+  if (filteredResults.length === 0) {
+    detailsHTML +=
+      '<p class="text-muted">No results match the confidence threshold of ' +
+      state.confidenceThreshold +
+      '%</p>';
+  } else {
+    Object.entries(groupedResults).forEach(([label, files]) => {
       detailsHTML += `
-                <div class="result-item">
-                    <span class="result-filename">
-                        <i class="bi bi-image"></i> ${file}
-                    </span>
-                    <span class="result-score ${scoreClass}">${result.top_score}%</span>
-                </div>
-            `;
-    });
+              <div class="result-category">
+                  <div class="result-category-header">
+                      <i class="bi bi-folder"></i> ${label.toUpperCase()} (${files.length})
+                  </div>
+          `;
 
-    detailsHTML += '</div>';
-  });
+      files.forEach((file) => {
+        const result = filteredResults.find((r) => r.filename === file);
+        if (result) {
+          const scoreClass =
+            result.top_score >= 80
+              ? 'score-high'
+              : result.top_score >= 50
+                ? 'score-medium'
+                : 'score-low';
+
+          detailsHTML += `
+                  <div class="result-item">
+                      <span class="result-filename">
+                          <i class="bi bi-image"></i> ${file}
+                      </span>
+                      <span class="result-score ${scoreClass}">${result.top_score}%</span>
+                  </div>
+              `;
+        }
+      });
+
+      detailsHTML += '</div>';
+    });
+  }
 
   resultsDetails.innerHTML = detailsHTML;
   resultsSection.style.display = 'block';
