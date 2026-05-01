@@ -4,7 +4,7 @@ Provides REST API for image classification
 """
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import io
@@ -51,7 +51,10 @@ def get_classifier():
 
 @app.get("/")
 async def root():
-    """Root endpoint - API info"""
+    """Root endpoint - serve index.html"""
+    frontend_path = Path(__file__).parent.parent / "frontend" / "index.html"
+    if frontend_path.exists():
+        return FileResponse(frontend_path)
     return {
         "name": "CLIP Image Classifier API",
         "version": "1.0.0",
@@ -203,24 +206,27 @@ async def classify_images(
             )
         
         elif export_format == "csv":
-            return FileResponse(
-                io.BytesIO(exporter.to_csv().encode()),
+            csv_data = exporter.to_csv().encode()
+            return StreamingResponse(
+                iter([csv_data]),
                 media_type="text/csv",
-                filename="results.csv"
+                headers={"Content-Disposition": "attachment; filename=results.csv"}
             )
         
         elif export_format == "excel":
-            return FileResponse(
-                io.BytesIO(exporter.to_excel()),
+            excel_data = exporter.to_excel()
+            return StreamingResponse(
+                iter([excel_data]),
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                filename="results.xlsx"
+                headers={"Content-Disposition": "attachment; filename=results.xlsx"}
             )
         
         elif export_format == "pdf":
-            return FileResponse(
-                io.BytesIO(exporter.to_pdf()),
+            pdf_data = exporter.to_pdf()
+            return StreamingResponse(
+                iter([pdf_data]),
                 media_type="application/pdf",
-                filename="results.pdf"
+                headers={"Content-Disposition": "attachment; filename=results.pdf"}
             )
         
         else:
@@ -327,6 +333,28 @@ async def shutdown_event():
     global _classifier
     if _classifier:
         _classifier.unload_model()
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# SERVE STATIC ASSETS (CSS, JS, etc)
+# ──────────────────────────────────────────────────────────────────────────
+
+@app.get("/styles.css")
+async def serve_css():
+    """Serve stylesheet"""
+    frontend_path = Path(__file__).parent.parent / "frontend" / "styles.css"
+    if frontend_path.exists():
+        return FileResponse(frontend_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="Stylesheet not found")
+
+
+@app.get("/script.js")
+async def serve_js():
+    """Serve main JavaScript"""
+    frontend_path = Path(__file__).parent.parent / "frontend" / "script.js"
+    if frontend_path.exists():
+        return FileResponse(frontend_path, media_type="text/javascript")
+    raise HTTPException(status_code=404, detail="Script not found")
 
 
 if __name__ == "__main__":
