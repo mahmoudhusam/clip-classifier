@@ -34,10 +34,5 @@
     "ico": "image/x-icon",
     "ppm": "image/x-portable-pixmap"
   },
-  "export_formats": [
-    "json",
-    "csv",
-    "excel",
-    "pdf"
-  ]
+  "export_formats": ["json", "csv", "excel", "pdf"]
 }
