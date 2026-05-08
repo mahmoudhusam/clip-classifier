@@ -300,16 +300,21 @@ function addNewPreset() {
   // If editing an existing preset
   if (state.editingPreset) {
     const oldName = state.editingPreset;
+    const isEditingBuiltIn = DEFAULT_PRESETS[oldName];
 
-    // If name changed, delete old one and create new
+    // If name changed, check for conflicts
     if (name !== oldName) {
       if (customPresets[name]) {
         showAlert('Preset with this name already exists', 'warning');
         return;
       }
-      delete customPresets[oldName];
+      // Remove old custom entry if exists
+      if (customPresets[oldName]) {
+        delete customPresets[oldName];
+      }
     }
 
+    // Always save to customPresets (overrides built-in if needed)
     customPresets[name] = labels;
     saveCustomPresets(customPresets);
 
@@ -357,6 +362,22 @@ function deletePreset(presetName) {
   showAlert(`Preset "${presetName}" deleted`, 'info');
 }
 
+function resetPresetToDefault(presetName) {
+  if (!DEFAULT_PRESETS[presetName]) {
+    showAlert('Cannot reset custom presets', 'warning');
+    return;
+  }
+
+  const customPresets = loadCustomPresets();
+  delete customPresets[presetName];
+  saveCustomPresets(customPresets);
+
+  rebuildPresetButtons();
+  displayPresetsList();
+
+  showAlert(`Preset "${presetName}" reset to default`, 'info');
+}
+
 function editPreset(presetName) {
   const allPresets = getAllPresets();
   const labels = allPresets[presetName];
@@ -382,14 +403,8 @@ function editPreset(presetName) {
   addBtn.className = 'btn btn-sm btn-primary';
 
   cancelBtn.style.display = 'inline-block';
-
-  if (DEFAULT_PRESETS[presetName]) {
-    nameInput.disabled = true;
-    nameHint.textContent = '(Built-in preset name cannot be changed)';
-  } else {
-    nameInput.disabled = false;
-    nameHint.textContent = '';
-  }
+  nameInput.disabled = false;
+  nameHint.textContent = '';
 
   // Focus on the inputs
   nameInput.focus();
@@ -441,8 +456,8 @@ function displayPresetsList() {
           <p class="mb-0 small text-muted">${labels.join(', ')}</p>
         </div>
         <div class="d-flex gap-2">
-          ${isCustom ? `<button class="btn btn-sm btn-warning" onclick="editPreset('${name}')"><i class="bi bi-pencil"></i> Edit</button>` : ''}
-          ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i> Delete</button>` : ''}
+          <button class="btn btn-sm btn-warning" onclick="editPreset('${name}')"><i class="bi bi-pencil"></i> Edit</button>
+          ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i> Delete</button>` : `<button class="btn btn-sm btn-outline-secondary" onclick="resetPresetToDefault('${name}')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>`}
         </div>
       </div>
     `;
