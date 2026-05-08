@@ -24,10 +24,18 @@ const DEFAULT_PRESETS = {
   emotions: ['happy', 'sad', 'angry', 'surprised', 'neutral'],
 };
 
-// Merge default and custom presets
+// Merge default and custom presets, excluding deleted ones
 function getAllPresets() {
   const customPresets = loadCustomPresets();
-  return { ...DEFAULT_PRESETS, ...customPresets };
+  const deletedPresets = loadDeletedPresets();
+  const allPresets = { ...DEFAULT_PRESETS, ...customPresets };
+
+  // Remove deleted presets
+  deletedPresets.forEach((name) => {
+    delete allPresets[name];
+  });
+
+  return allPresets;
 }
 
 function loadCustomPresets() {
@@ -45,6 +53,24 @@ function saveCustomPresets(presets) {
     localStorage.setItem('customPresets', JSON.stringify(presets));
   } catch (error) {
     console.error('Error saving custom presets:', error);
+  }
+}
+
+function loadDeletedPresets() {
+  try {
+    const stored = localStorage.getItem('deletedPresets');
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading deleted presets:', error);
+    return [];
+  }
+}
+
+function saveDeletedPresets(presets) {
+  try {
+    localStorage.setItem('deletedPresets', JSON.stringify(presets));
+  } catch (error) {
+    console.error('Error saving deleted presets:', error);
   }
 }
 
@@ -347,14 +373,21 @@ function addNewPreset() {
 }
 
 function deletePreset(presetName) {
-  if (DEFAULT_PRESETS[presetName]) {
-    showAlert('Cannot delete built-in presets', 'warning');
-    return;
-  }
+  const isBuiltIn = DEFAULT_PRESETS[presetName];
 
-  const customPresets = loadCustomPresets();
-  delete customPresets[presetName];
-  saveCustomPresets(customPresets);
+  if (isBuiltIn) {
+    // For built-in presets, add to deleted list
+    const deletedPresets = loadDeletedPresets();
+    if (!deletedPresets.includes(presetName)) {
+      deletedPresets.push(presetName);
+      saveDeletedPresets(deletedPresets);
+    }
+  } else {
+    // For custom presets, delete from customPresets
+    const customPresets = loadCustomPresets();
+    delete customPresets[presetName];
+    saveCustomPresets(customPresets);
+  }
 
   rebuildPresetButtons();
   displayPresetsList();
@@ -368,9 +401,18 @@ function resetPresetToDefault(presetName) {
     return;
   }
 
+  // Remove from customPresets (removes any edits)
   const customPresets = loadCustomPresets();
   delete customPresets[presetName];
   saveCustomPresets(customPresets);
+
+  // Remove from deletedPresets (restores if it was deleted)
+  const deletedPresets = loadDeletedPresets();
+  const index = deletedPresets.indexOf(presetName);
+  if (index > -1) {
+    deletedPresets.splice(index, 1);
+    saveDeletedPresets(deletedPresets);
+  }
 
   rebuildPresetButtons();
   displayPresetsList();
@@ -437,12 +479,14 @@ function cancelEditPreset() {
 
 function displayPresetsList() {
   const allPresets = getAllPresets();
+  const customPresets = loadCustomPresets();
   const presetsList = document.getElementById('presetsList');
 
   presetsList.innerHTML = '';
 
   Object.entries(allPresets).forEach(([name, labels]) => {
     const isCustom = !DEFAULT_PRESETS[name];
+    const isModified = DEFAULT_PRESETS[name] && customPresets[name];
     const item = document.createElement('div');
     item.className = 'list-group-item';
 
@@ -457,7 +501,8 @@ function displayPresetsList() {
         </div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-warning" onclick="editPreset('${name}')"><i class="bi bi-pencil"></i> Edit</button>
-          ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i> Delete</button>` : `<button class="btn btn-sm btn-outline-secondary" onclick="resetPresetToDefault('${name}')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>`}
+          <button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i> Delete</button>
+          ${isModified ? `<button class="btn btn-sm btn-outline-secondary" onclick="resetPresetToDefault('${name}')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>` : ''}
         </div>
       </div>
     `;
