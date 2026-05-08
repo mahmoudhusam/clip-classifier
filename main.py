@@ -21,13 +21,13 @@ import uvicorn
 from backend.app import app
 
 
-def run_server():
+    def run_server():
     """Start the FastAPI server"""
     print("\n" + "="*60)
     print("  🖼️  CLIP Image Classifier - Production")
     print("="*60 + "\n")
     
-    print("Loading CLIP model (best model for Windows)...")
+    print("Loading CLIP model (lightweight model for CPU)...")
     print("This may take 30-60 seconds on first run...\n")
     
     # Run the server
@@ -43,9 +43,9 @@ if __name__ == "__main__":
     try:
         # Print startup info
         print("✓ Environment: Production")
-        print("✓ Model: openai/clip-vit-large-patch14 (Best Quality)")
-        print("✓ Device: CUDA (GPU)")
-        print("✓ Batch Size: 32")
+        print("✓ Model: openai/clip-vit-base-patch32 (Fast & Lightweight)")
+        print("✓ Device: CPU")
+        print("✓ Batch Size: 4")
         print("✓ Starting server on http://127.0.0.1:5000\n")
         
         # Start the server

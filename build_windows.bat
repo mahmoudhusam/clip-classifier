@@ -42,15 +42,15 @@ echo Installing production dependencies (including PyInstaller, CUDA-enabled PyT
 echo This may take several minutes...
 echo.
 
-REM Install core dependencies with CUDA support
+REM Install core dependencies
 pip install --upgrade pip setuptools wheel >nul 2>&1
 pip install pyinstaller>=6.0.0
 pip install fastapi uvicorn[standard] transformers openpyxl reportlab python-multipart pydantic tqdm typer typing_extensions
 
-REM Install PyTorch with CUDA support for Windows
+REM Install PyTorch CPU version for Windows
 echo.
-echo Installing PyTorch with CUDA support (for GPU acceleration)...
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+echo Installing PyTorch (CPU version)...
+pip install torch torchvision torchaudio
 
 echo.
 echo ✓ All dependencies installed successfully

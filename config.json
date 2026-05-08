@@ -11,8 +11,8 @@
     "name": "Production",
     "model": "openai/clip-vit-base-patch32",
     "description": "Fast and lightweight model for production on Windows",
-    "batch_size": 16,
-    "device": "cuda",
+    "batch_size": 4,
+    "device": "cpu",
     "max_images": 1000
   },
   "default_labels": [
