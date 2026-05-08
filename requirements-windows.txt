@@ -1,0 +1,35 @@
+# CLIP Classifier - Windows Production Requirements
+# Optimized for Windows with CUDA GPU support
+
+# Core ML/Vision (CUDA-optimized)
+# Use: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+torch==2.1.0
+torchvision==0.16.0
+torchaudio==2.1.0
+
+# Transformers and Models
+transformers==4.35.0
+Pillow==10.0.0
+
+# Web Framework
+fastapi==0.104.0
+uvicorn[standard]==0.24.0
+starlette==0.27.0
+
+# Data Processing
+numpy==1.24.0
+pandas==2.0.0
+
+# Export Formats
+openpyxl==3.1.0
+reportlab==4.0.0
+
+# Utilities
+python-multipart==0.0.6
+pydantic==2.4.0
+tqdm==4.67.3
+typer==0.9.0
+typing_extensions==4.8.0
+
+# Packaging
+pyinstaller==6.1.0
