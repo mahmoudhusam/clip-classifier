@@ -119,7 +119,7 @@
                 <!-- Labels displayed here -->
               </div>
               <small class="text-muted d-block mb-2">Quick Presets:</small>
-              <div class="d-flex flex-wrap gap-2">
+              <div id="presetsContainer" class="d-flex flex-wrap gap-2 mb-3">
                 <button
                   class="btn btn-sm btn-outline-secondary preset-btn"
                   data-preset="general"
@@ -145,6 +145,14 @@
                   Emotions
                 </button>
               </div>
+              <button
+                id="managePresetsBtn"
+                class="btn btn-sm btn-outline-info w-100"
+                data-bs-toggle="modal"
+                data-bs-target="#presetsModal"
+              >
+                <i class="bi bi-gear"></i> Manage Presets
+              </button>
             </div>
           </div>
 
@@ -260,6 +268,61 @@
             </div>
             <div id="serverStatus" class="alert alert-info">
               Loading server info...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Presets Management Modal -->
+    <div class="modal fade" id="presetsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title"><i class="bi bi-collection"></i> Manage Presets</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Add New Preset Form -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">Create New Preset</h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold">Preset Name</label>
+                  <input
+                    type="text"
+                    id="newPresetName"
+                    class="form-control form-control-sm"
+                    placeholder="e.g., Finance, Medical, Fashion"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold">Labels (comma-separated)</label>
+                  <textarea
+                    id="newPresetLabels"
+                    class="form-control form-control-sm"
+                    rows="3"
+                    placeholder="invoices, products, finance pills, receipts"
+                  ></textarea>
+                </div>
+                <button id="addNewPresetBtn" class="btn btn-sm btn-success">
+                  <i class="bi bi-plus-lg"></i> Create Preset
+                </button>
+              </div>
+            </div>
+
+            <!-- Presets List -->
+            <div>
+              <h6 class="mb-3">Your Presets</h6>
+              <div id="presetsList" class="list-group">
+                <!-- Presets will be listed here -->
+              </div>
             </div>
           </div>
         </div>

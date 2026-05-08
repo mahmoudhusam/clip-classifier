@@ -16,12 +16,36 @@ const state = {
 };
 
 // ── Label Presets ─────────────────────────────────────────────────────────
-const PRESETS = {
+const DEFAULT_PRESETS = {
   general: ['person', 'car', 'nature', 'food', 'text or screenshot', 'animals'],
   objects: ['car', 'person', 'dog', 'cat', 'phone', 'laptop', 'book'],
   scenes: ['indoor', 'outdoor', 'nature', 'city', 'beach', 'mountain'],
   emotions: ['happy', 'sad', 'angry', 'surprised', 'neutral'],
 };
+
+// Merge default and custom presets
+function getAllPresets() {
+  const customPresets = loadCustomPresets();
+  return { ...DEFAULT_PRESETS, ...customPresets };
+}
+
+function loadCustomPresets() {
+  try {
+    const stored = localStorage.getItem('customPresets');
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    console.error('Error loading custom presets:', error);
+    return {};
+  }
+}
+
+function saveCustomPresets(presets) {
+  try {
+    localStorage.setItem('customPresets', JSON.stringify(presets));
+  } catch (error) {
+    console.error('Error saving custom presets:', error);
+  }
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 // INITIALIZATION
@@ -201,25 +225,159 @@ function updateLabelsList() {
 }
 
 function loadDefaultLabels() {
-  const defaultLabels = PRESETS.general.slice(0, 3);
+  const allPresets = getAllPresets();
+  const defaultLabels = allPresets.general.slice(0, 3);
   state.labels = defaultLabels;
   updateLabelsList();
   updateClassifyButtonState();
 }
 
 function setPreset(presetName) {
-  state.labels = [...PRESETS[presetName]];
-  updateLabelsList();
-  updateClassifyButtonState();
+  const allPresets = getAllPresets();
+  if (allPresets[presetName]) {
+    state.labels = [...allPresets[presetName]];
+    updateLabelsList();
+    updateClassifyButtonState();
+  }
 }
 
 function initializePresets() {
-  document.querySelectorAll('.preset-btn').forEach((btn) => {
+  // Rebuild preset buttons dynamically
+  rebuildPresetButtons();
+  
+  // Initialize preset management
+  initializePresetManagement();
+}
+
+function initializePresetManagement() {
+  const addBtn = document.getElementById('addNewPresetBtn');
+  const nameInput = document.getElementById('newPresetName');
+  const labelsInput = document.getElementById('newPresetLabels');
+  
+  addBtn.addEventListener('click', addNewPreset);
+  nameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addNewPreset();
+  });
+  
+  // Display existing presets
+  displayPresetsList();
+}
+
+function addNewPreset() {
+  const nameInput = document.getElementById('newPresetName');
+  const labelsInput = document.getElementById('newPresetLabels');
+  
+  const name = nameInput.value.trim().toLowerCase();
+  const labelsText = labelsInput.value.trim();
+  
+  if (!name) {
+    showAlert('Preset name cannot be empty', 'warning');
+    return;
+  }
+  
+  if (!labelsText) {
+    showAlert('Please add at least one label', 'warning');
+    return;
+  }
+  
+  // Parse labels (comma-separated)
+  const labels = labelsText
+    .split(',')
+    .map(label => label.trim().toLowerCase())
+    .filter(label => label.length > 0);
+  
+  if (labels.length === 0) {
+    showAlert('Please add valid labels', 'warning');
+    return;
+  }
+  
+  // Check if preset already exists
+  const allPresets = getAllPresets();
+  if (allPresets[name]) {
+    showAlert('Preset with this name already exists', 'warning');
+    return;
+  }
+  
+  // Save new preset
+  const customPresets = loadCustomPresets();
+  customPresets[name] = labels;
+  saveCustomPresets(customPresets);
+  
+  // Clear inputs
+  nameInput.value = '';
+  labelsInput.value = '';
+  
+  // Refresh UI
+  rebuildPresetButtons();
+  displayPresetsList();
+  
+  showAlert(`Preset "${name}" created successfully!`, 'success');
+}
+
+function deletePreset(presetName) {
+  if (DEFAULT_PRESETS[presetName]) {
+    showAlert('Cannot delete built-in presets', 'warning');
+    return;
+  }
+  
+  const customPresets = loadCustomPresets();
+  delete customPresets[presetName];
+  saveCustomPresets(customPresets);
+  
+  rebuildPresetButtons();
+  displayPresetsList();
+  
+  showAlert(`Preset "${presetName}" deleted`, 'info');
+}
+
+function displayPresetsList() {
+  const allPresets = getAllPresets();
+  const presetsList = document.getElementById('presetsList');
+  
+  presetsList.innerHTML = '';
+  
+  Object.entries(allPresets).forEach(([name, labels]) => {
+    const isCustom = !DEFAULT_PRESETS[name];
+    const item = document.createElement('div');
+    item.className = 'list-group-item';
+    
+    const html = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <h6 class="mb-1">
+            ${name.charAt(0).toUpperCase() + name.slice(1)}
+            ${isCustom ? '<span class="badge bg-info ms-2">Custom</span>' : '<span class="badge bg-secondary ms-2">Built-in</span>'}
+          </h6>
+          <p class="mb-0 small text-muted">${labels.join(', ')}</p>
+        </div>
+        ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i></button>` : ''}
+      </div>
+    `;
+    
+    item.innerHTML = html;
+    presetsList.appendChild(item);
+  });
+}
+
+function rebuildPresetButtons() {
+  const allPresets = getAllPresets();
+  const presetsContainer = document.getElementById('presetsContainer');
+  
+  presetsContainer.innerHTML = '';
+  
+  Object.keys(allPresets).forEach((presetName) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-outline-secondary preset-btn';
+    btn.dataset.preset = presetName;
+    btn.textContent = presetName.charAt(0).toUpperCase() + presetName.slice(1);
+    
     btn.addEventListener('click', () => {
-      const preset = btn.dataset.preset;
-      setPreset(preset);
-      showAlert(`Loaded ${preset} preset labels`, 'info');
+      setPreset(presetName);
+      showAlert(`Loaded ${presetName} preset labels`, 'info');
     });
+    
+    presetsContainer.appendChild(btn);
   });
 }
 
