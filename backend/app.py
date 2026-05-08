@@ -156,12 +156,6 @@ async def classify_images(
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
         
-        if len(files) > config.max_images:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Too many images. Max: {config.max_images}"
-            )
-        
         # Parse labels
         label_list = [l.strip() for l in labels.split(",") if l.strip()]
         if len(label_list) < 2:
@@ -263,8 +257,7 @@ async def classify_folder(
         # Load images from folder
         try:
             images = ImageProcessor.load_from_folder(
-                folder_path,
-                max_images=config.max_images
+                folder_path
             )
             if not images:
                 raise HTTPException(status_code=400, detail="No images found in folder")
