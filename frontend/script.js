@@ -13,6 +13,7 @@ const state = {
   confidenceThreshold: 0,
   exportFormat: 'json',
   isClassifying: false,
+  editingPreset: null, // Track which preset is being edited
 };
 
 // ── Label Presets ─────────────────────────────────────────────────────────
@@ -244,7 +245,7 @@ function setPreset(presetName) {
 function initializePresets() {
   // Rebuild preset buttons dynamically
   rebuildPresetButtons();
-  
+
   // Initialize preset management
   initializePresetManagement();
 }
@@ -253,12 +254,15 @@ function initializePresetManagement() {
   const addBtn = document.getElementById('addNewPresetBtn');
   const nameInput = document.getElementById('newPresetName');
   const labelsInput = document.getElementById('newPresetLabels');
-  
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+
   addBtn.addEventListener('click', addNewPreset);
   nameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addNewPreset();
   });
-  
+
+  cancelEditBtn.addEventListener('click', cancelEditPreset);
+
   // Display existing presets
   displayPresetsList();
 }
@@ -266,52 +270,75 @@ function initializePresetManagement() {
 function addNewPreset() {
   const nameInput = document.getElementById('newPresetName');
   const labelsInput = document.getElementById('newPresetLabels');
-  
+
   const name = nameInput.value.trim().toLowerCase();
   const labelsText = labelsInput.value.trim();
-  
+
   if (!name) {
     showAlert('Preset name cannot be empty', 'warning');
     return;
   }
-  
+
   if (!labelsText) {
     showAlert('Please add at least one label', 'warning');
     return;
   }
-  
+
   // Parse labels (comma-separated)
   const labels = labelsText
     .split(',')
-    .map(label => label.trim().toLowerCase())
-    .filter(label => label.length > 0);
-  
+    .map((label) => label.trim().toLowerCase())
+    .filter((label) => label.length > 0);
+
   if (labels.length === 0) {
     showAlert('Please add valid labels', 'warning');
     return;
   }
-  
-  // Check if preset already exists
-  const allPresets = getAllPresets();
-  if (allPresets[name]) {
-    showAlert('Preset with this name already exists', 'warning');
-    return;
-  }
-  
-  // Save new preset
+
   const customPresets = loadCustomPresets();
-  customPresets[name] = labels;
-  saveCustomPresets(customPresets);
-  
-  // Clear inputs
-  nameInput.value = '';
-  labelsInput.value = '';
-  
+
+  // If editing an existing preset
+  if (state.editingPreset) {
+    const oldName = state.editingPreset;
+
+    // If name changed, delete old one and create new
+    if (name !== oldName) {
+      if (customPresets[name]) {
+        showAlert('Preset with this name already exists', 'warning');
+        return;
+      }
+      delete customPresets[oldName];
+    }
+
+    customPresets[name] = labels;
+    saveCustomPresets(customPresets);
+
+    showAlert(`Preset "${name}" updated successfully!`, 'success');
+    cancelEditPreset();
+  }
+  // Creating a new preset
+  else {
+    // Check if preset already exists
+    const allPresets = getAllPresets();
+    if (allPresets[name]) {
+      showAlert('Preset with this name already exists', 'warning');
+      return;
+    }
+
+    // Save new preset
+    customPresets[name] = labels;
+    saveCustomPresets(customPresets);
+
+    showAlert(`Preset "${name}" created successfully!`, 'success');
+
+    // Clear inputs
+    nameInput.value = '';
+    labelsInput.value = '';
+  }
+
   // Refresh UI
   rebuildPresetButtons();
   displayPresetsList();
-  
-  showAlert(`Preset "${name}" created successfully!`, 'success');
 }
 
 function deletePreset(presetName) {
@@ -319,28 +346,91 @@ function deletePreset(presetName) {
     showAlert('Cannot delete built-in presets', 'warning');
     return;
   }
-  
+
   const customPresets = loadCustomPresets();
   delete customPresets[presetName];
   saveCustomPresets(customPresets);
-  
+
   rebuildPresetButtons();
   displayPresetsList();
-  
+
   showAlert(`Preset "${presetName}" deleted`, 'info');
+}
+
+function editPreset(presetName) {
+  const allPresets = getAllPresets();
+  const labels = allPresets[presetName];
+
+  if (!labels) return;
+
+  // Set editing mode
+  state.editingPreset = presetName;
+
+  // Update UI
+  const formTitle = document.getElementById('presetFormTitle');
+  const nameInput = document.getElementById('newPresetName');
+  const labelsInput = document.getElementById('newPresetLabels');
+  const addBtn = document.getElementById('addNewPresetBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const nameHint = document.getElementById('presetNameHint');
+
+  formTitle.textContent = `Edit Preset: ${presetName.charAt(0).toUpperCase() + presetName.slice(1)}`;
+  nameInput.value = presetName;
+  labelsInput.value = labels.join(', ');
+
+  addBtn.innerHTML = '<i class="bi bi-check-lg"></i> Save Preset';
+  addBtn.className = 'btn btn-sm btn-primary';
+
+  cancelBtn.style.display = 'inline-block';
+
+  if (DEFAULT_PRESETS[presetName]) {
+    nameInput.disabled = true;
+    nameHint.textContent = '(Built-in preset name cannot be changed)';
+  } else {
+    nameInput.disabled = false;
+    nameHint.textContent = '';
+  }
+
+  // Focus on the inputs
+  nameInput.focus();
+  nameInput.select();
+}
+
+function cancelEditPreset() {
+  const formTitle = document.getElementById('presetFormTitle');
+  const nameInput = document.getElementById('newPresetName');
+  const labelsInput = document.getElementById('newPresetLabels');
+  const addBtn = document.getElementById('addNewPresetBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const nameHint = document.getElementById('presetNameHint');
+
+  // Reset editing mode
+  state.editingPreset = null;
+
+  // Reset UI
+  formTitle.textContent = 'Create New Preset';
+  nameInput.value = '';
+  labelsInput.value = '';
+  nameInput.disabled = false;
+  nameHint.textContent = '';
+
+  addBtn.innerHTML = '<i class="bi bi-plus-lg"></i> Create Preset';
+  addBtn.className = 'btn btn-sm btn-success';
+
+  cancelBtn.style.display = 'none';
 }
 
 function displayPresetsList() {
   const allPresets = getAllPresets();
   const presetsList = document.getElementById('presetsList');
-  
+
   presetsList.innerHTML = '';
-  
+
   Object.entries(allPresets).forEach(([name, labels]) => {
     const isCustom = !DEFAULT_PRESETS[name];
     const item = document.createElement('div');
     item.className = 'list-group-item';
-    
+
     const html = `
       <div class="d-flex justify-content-between align-items-start">
         <div class="flex-grow-1">
@@ -350,10 +440,13 @@ function displayPresetsList() {
           </h6>
           <p class="mb-0 small text-muted">${labels.join(', ')}</p>
         </div>
-        ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i></button>` : ''}
+        <div class="d-flex gap-2">
+          ${isCustom ? `<button class="btn btn-sm btn-warning" onclick="editPreset('${name}')"><i class="bi bi-pencil"></i> Edit</button>` : ''}
+          ${isCustom ? `<button class="btn btn-sm btn-danger" onclick="deletePreset('${name}')"><i class="bi bi-trash"></i> Delete</button>` : ''}
+        </div>
       </div>
     `;
-    
+
     item.innerHTML = html;
     presetsList.appendChild(item);
   });
@@ -362,21 +455,21 @@ function displayPresetsList() {
 function rebuildPresetButtons() {
   const allPresets = getAllPresets();
   const presetsContainer = document.getElementById('presetsContainer');
-  
+
   presetsContainer.innerHTML = '';
-  
+
   Object.keys(allPresets).forEach((presetName) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn-sm btn-outline-secondary preset-btn';
     btn.dataset.preset = presetName;
     btn.textContent = presetName.charAt(0).toUpperCase() + presetName.slice(1);
-    
+
     btn.addEventListener('click', () => {
       setPreset(presetName);
       showAlert(`Loaded ${presetName} preset labels`, 'info');
     });
-    
+
     presetsContainer.appendChild(btn);
   });
 }

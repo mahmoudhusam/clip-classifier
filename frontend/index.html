@@ -279,7 +279,9 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title"><i class="bi bi-collection"></i> Manage Presets</h5>
+            <h5 class="modal-title">
+              <i class="bi bi-collection"></i> Manage Presets
+            </h5>
             <button
               type="button"
               class="btn-close btn-close-white"
@@ -287,10 +289,19 @@
             ></button>
           </div>
           <div class="modal-body">
-            <!-- Add New Preset Form -->
+            <!-- Add/Edit Preset Form -->
             <div class="card mb-4">
               <div class="card-header bg-light">
-                <h6 class="mb-0">Create New Preset</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0" id="presetFormTitle">Create New Preset</h6>
+                  <button
+                    id="cancelEditBtn"
+                    class="btn btn-sm btn-outline-secondary"
+                    style="display: none"
+                  >
+                    <i class="bi bi-x-lg"></i> Cancel Edit
+                  </button>
+                </div>
               </div>
               <div class="card-body">
                 <div class="mb-3">
@@ -301,9 +312,15 @@
                     class="form-control form-control-sm"
                     placeholder="e.g., Finance, Medical, Fashion"
                   />
+                  <small
+                    id="presetNameHint"
+                    class="text-muted d-block mt-1"
+                  ></small>
                 </div>
                 <div class="mb-3">
-                  <label class="form-label small fw-bold">Labels (comma-separated)</label>
+                  <label class="form-label small fw-bold"
+                    >Labels (comma-separated)</label
+                  >
                   <textarea
                     id="newPresetLabels"
                     class="form-control form-control-sm"
@@ -311,9 +328,11 @@
                     placeholder="invoices, products, finance pills, receipts"
                   ></textarea>
                 </div>
-                <button id="addNewPresetBtn" class="btn btn-sm btn-success">
-                  <i class="bi bi-plus-lg"></i> Create Preset
-                </button>
+                <div class="d-flex gap-2">
+                  <button id="addNewPresetBtn" class="btn btn-sm btn-success">
+                    <i class="bi bi-plus-lg"></i> Create Preset
+                  </button>
+                </div>
               </div>
             </div>
 
