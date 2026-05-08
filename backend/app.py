@@ -16,6 +16,8 @@ from backend.models.classifier import CLIPClassifier
 from backend.models.image_processor import ImageProcessor
 from backend.utils.exporters import ResultExporter
 
+# Set Hugging Face models directory to local models folder
+os.environ['HF_HOME'] = str(Path(__file__).parent.parent / 'models')
 
 # ── Initialize FastAPI App ───────────────────────────────────────────────
 app = FastAPI(
