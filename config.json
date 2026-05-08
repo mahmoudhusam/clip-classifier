@@ -9,9 +9,9 @@
   },
   "production": {
     "name": "Production",
-    "model": "openai/clip-vit-large-patch14",
-    "description": "Strongest model for high-accuracy classification on Windows",
-    "batch_size": 32,
+    "model": "openai/clip-vit-base-patch32",
+    "description": "Fast and lightweight model for production on Windows",
+    "batch_size": 16,
     "device": "cuda",
     "max_images": 1000
   },
