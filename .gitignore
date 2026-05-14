@@ -31,3 +31,5 @@ Thumbs.db
 # Results (optional - remove this line if you want to track results.json)
 # results.json
 server.log
+
+/images/

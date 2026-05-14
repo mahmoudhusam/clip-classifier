@@ -9,10 +9,10 @@
   },
   "production": {
     "name": "Production",
-    "model": "openai/clip-vit-base-patch32",
-    "description": "Fast and lightweight model for production on Windows",
-    "batch_size": 4,
-    "device": "cpu",
+    "model": "openai/clip-vit-large-patch14",
+    "description": "Best quality CLIP model with CUDA GPU acceleration",
+    "batch_size": 16,
+    "device": "cuda",
     "max_images": 1000
   },
   "default_labels": [
